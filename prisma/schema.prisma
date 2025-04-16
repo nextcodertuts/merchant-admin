@@ -1,0 +1,204 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             String        @id @default(cuid())
+  email          String        @unique
+  hashedPassword String
+  name           String?
+  avatarUrl      String?
+  subscriptionId String?       @default("basic")
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id])
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  products      Product[]
+  invoices      Invoice[]
+  businesses    Business[]
+  stockLogs     StockLog[]
+  payments      Payment[]
+  clients       Client[]
+  expenses      Expense[]
+  searchQueries SearchQuery[]
+
+  sessions Session[]
+}
+
+model Subscription {
+  id            String   @id
+  name          String
+  description   String
+  maxBusinesses Int
+  price         Float
+  users         User[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Session {
+  id        String   @id
+  userId    String
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Client {
+  id          String    @id @default(cuid())
+  name        String
+  email       String?
+  phone       String
+  address     String?
+  totalCredit Float     @default(0)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  invoices    Invoice[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([phone, userId])
+  @@index([phone])
+}
+
+model Business {
+  id                String    @id @default(cuid())
+  name              String
+  address           String?
+  city              String?
+  state             String?
+  pincode           String?
+  phone             String?
+  email             String?
+  website           String?
+  logoUrl           String?
+  bankName          String?
+  ifscCode          String?
+  accountNo         String?
+  upiId             String?
+  invoicePrefix     String    @default("INV")
+  lastInvoiceNumber Int       @default(0)
+  userId            String
+  user              User      @relation(fields: [userId], references: [id])
+  invoices          Invoice[]
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model Product {
+  id           String        @id @default(cuid())
+  name         String
+  description  String?
+  category     String        @default("General")
+  buyPrice     Float         @default(0)
+  price        Float
+  unit         String        @default("piece")
+  taxPercent   Float         @default(0)
+  stock        Int           @default(0)
+  minStock     Int           @default(0)
+  images       String[]      @default([])
+  userId       String
+  user         User          @relation(fields: [userId], references: [id])
+  invoiceItems InvoiceItem[]
+  stockLogs    StockLog[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([category])
+}
+
+model StockLog {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  type      String
+  note      String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Invoice {
+  id         String        @id @default(cuid())
+  number     String
+  clientId   String
+  client     Client        @relation(fields: [clientId], references: [id])
+  date       DateTime      @default(now())
+  dueDate    DateTime
+  status     String
+  total      Float
+  amountPaid Float         @default(0)
+  discount   Float         @default(0)
+  userId     String
+  businessId String
+  user       User          @relation(fields: [userId], references: [id])
+  business   Business      @relation(fields: [businessId], references: [id])
+  items      InvoiceItem[]
+  payments   Payment[]
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@unique([number, businessId])
+}
+
+model Payment {
+  id             String   @id @default(cuid())
+  invoiceId      String
+  invoice        Invoice  @relation(fields: [invoiceId], references: [id])
+  amount         Float
+  method         String
+  reference      String?
+  note           String?
+  isDiscounted   Boolean  @default(false)
+  discountAmount Float    @default(0)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  date           DateTime @default(now())
+  createdAt      DateTime @default(now())
+}
+
+model InvoiceItem {
+  id        String  @id @default(cuid())
+  quantity  Int
+  price     Float?
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id])
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  date        DateTime
+  amount      Float
+  category    String
+  description String?
+  paymentMode String
+  reference   String?
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SearchQuery {
+  id             String   @id @default(cuid())
+  query          String
+  city           String
+  count          Int      @default(1)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  lastSearchedAt DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  @@unique([query, city], name: "query_city")
+  @@index([city, lastSearchedAt])
+  @@index([count])
+}
