@@ -11,6 +11,7 @@ import LowStockAlertsCard from "@/components/dashboard/low-stock-alerts-card";
 
 export default function DashboardPage() {
   const [period, setPeriod] = useState("7days");
+  const [businessId, setBusinessId] = useState("");
   const [stats, setStats] = useState<DashboardStats>({
     totalSales: 0,
     totalCredit: 0,
@@ -38,7 +39,11 @@ export default function DashboardPage() {
   useEffect(() => {
     async function fetchDashboardData() {
       try {
-        const response = await fetch(`/api/dashboard?period=${period}`);
+        const params = new URLSearchParams({
+          period,
+          ...(businessId && { businessId }),
+        });
+        const response = await fetch(`/api/dashboard?${params}`);
         if (!response.ok) throw new Error("Failed to fetch dashboard data");
         const data = await response.json();
         setStats(data);
@@ -51,7 +56,7 @@ export default function DashboardPage() {
     }
 
     fetchDashboardData();
-  }, [period]);
+  }, [period, businessId]);
 
   if (loading) {
     return (
@@ -63,7 +68,12 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <DashboardHeader period={period} setPeriod={setPeriod} />
+      <DashboardHeader
+        period={period}
+        setPeriod={setPeriod}
+        businessId={businessId}
+        setBusinessId={setBusinessId}
+      />
 
       <MetricsCards stats={stats} />
 

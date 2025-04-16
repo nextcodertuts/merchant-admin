@@ -12,6 +12,7 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const period = searchParams.get("period") || "today";
+    const businessId = searchParams.get("businessId");
 
     // Calculate date range based on period
     let startDate = new Date();
@@ -40,6 +41,7 @@ export async function GET(request: Request) {
     const invoices = await prisma.invoice.findMany({
       where: {
         userId: user.id,
+        ...(businessId && { businessId }),
         date: {
           gte: startDate,
           lte: endDate,
@@ -78,6 +80,7 @@ export async function GET(request: Request) {
     const previousPeriodInvoices = await prisma.invoice.findMany({
       where: {
         userId: user.id,
+        ...(businessId && { businessId }),
         date: {
           gte: previousStartDate,
           lte: previousEndDate,
