@@ -33,14 +33,30 @@ export async function register(formData: FormData) {
 
     const { name, email, password } = result.data;
 
-    console.log("result", result.data);
-
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
 
     if (existingUser) {
       return { error: "Email already registered" };
+    }
+
+    // Check if the basic subscription exists
+    const basicSubscription = await prisma.subscription.findUnique({
+      where: { id: "basic" },
+    });
+
+    // If the basic subscription doesn't exist, create it
+    if (!basicSubscription) {
+      await prisma.subscription.create({
+        data: {
+          id: "basic",
+          name: "Basic Plan",
+          description: "Basic features for individual users",
+          maxBusinesses: 1,
+          price: 0,
+        },
+      });
     }
 
     const hashedPassword = await hash(password, {
@@ -55,13 +71,12 @@ export async function register(formData: FormData) {
         name,
         email,
         hashedPassword,
-        subscriptionId: "basic", // Set default subscription
+        subscriptionId: "basic", // Now this will work because the subscription exists
       },
     });
 
     const session = await lucia.createSession(user.id, {});
     const sessionCookie = lucia.createSessionCookie(session.id);
-
     (await cookies()).set(
       sessionCookie.name,
       sessionCookie.value,

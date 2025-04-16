@@ -31,9 +31,9 @@ export default function MetricsCards({ stats }: MetricsCardsProps) {
         icon={<PiggyBank />}
         trend={stats.grossProfitTrend}
         trendLabel="from last period"
-        additionalInfo={`Margin: ${stats.profitMetrics.grossMarginPercent.toFixed(
-          1
-        )}%`}
+        additionalInfo={`Margin: ${
+          stats.profitMetrics?.grossMarginPercent?.toFixed(1) || "0.0"
+        }%`}
       />
 
       <MetricCard
@@ -53,9 +53,9 @@ export default function MetricsCards({ stats }: MetricsCardsProps) {
         icon={<Wallet />}
         trend={stats.netProfitTrend}
         trendLabel="from last period"
-        additionalInfo={`Margin: ${stats.profitMetrics.netMarginPercent.toFixed(
-          1
-        )}%`}
+        additionalInfo={`Margin: ${
+          stats.profitMetrics?.netMarginPercent?.toFixed(1) || "0.0"
+        }%`}
       />
 
       <MetricCard
