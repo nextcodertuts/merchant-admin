@@ -1,4 +1,3 @@
-// lib/hooks/useInvoices.ts
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useEffect } from "react";
@@ -20,6 +19,12 @@ interface UseInvoicesReturn {
   setSearch: (search: string) => void;
   page: number;
   setPage: (page: number) => void;
+  businessId: string;
+  setBusinessId: (businessId: string) => void;
+  sortBy: string;
+  setSortBy: (sortBy: string) => void;
+  sortOrder: string;
+  setSortOrder: (sortOrder: string) => void;
   refreshInvoices: () => Promise<void>;
 }
 
@@ -28,6 +33,9 @@ export function useInvoices(): UseInvoicesReturn {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [businessId, setBusinessId] = useState("");
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortOrder, setSortOrder] = useState("desc");
   const [pagination, setPagination] = useState<PaginationData>({
     total: 0,
     pages: 0,
@@ -41,6 +49,9 @@ export function useInvoices(): UseInvoicesReturn {
         page: page.toString(),
         limit: "10",
         ...(search && { search }),
+        ...(businessId && { businessId }),
+        sortBy,
+        sortOrder,
       });
 
       const response = await fetch(`/api/invoices?${params}`);
@@ -58,7 +69,7 @@ export function useInvoices(): UseInvoicesReturn {
 
   useEffect(() => {
     fetchInvoices();
-  }, [search, page]);
+  }, [search, page, businessId, sortBy, sortOrder]);
 
   return {
     invoices,
@@ -68,6 +79,12 @@ export function useInvoices(): UseInvoicesReturn {
     setSearch,
     page,
     setPage,
+    businessId,
+    setBusinessId,
+    sortBy,
+    setSortBy,
+    sortOrder,
+    setSortOrder,
     refreshInvoices: fetchInvoices,
   };
 }

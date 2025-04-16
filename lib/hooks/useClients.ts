@@ -19,6 +19,12 @@ interface UseClientsReturn {
   setSearch: (search: string) => void;
   page: number;
   setPage: (page: number) => void;
+  businessId: string;
+  setBusinessId: (businessId: string) => void;
+  sortBy: string;
+  setSortBy: (sortBy: string) => void;
+  sortOrder: string;
+  setSortOrder: (sortOrder: string) => void;
 }
 
 export function useClients(): UseClientsReturn {
@@ -26,6 +32,9 @@ export function useClients(): UseClientsReturn {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [businessId, setBusinessId] = useState("");
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortOrder, setSortOrder] = useState("desc");
   const [pagination, setPagination] = useState<PaginationData>({
     total: 0,
     pages: 0,
@@ -40,6 +49,9 @@ export function useClients(): UseClientsReturn {
           page: page.toString(),
           limit: "10",
           ...(search && { search }),
+          ...(businessId && { businessId }),
+          sortBy,
+          sortOrder,
         });
 
         const response = await fetch(`/api/clients?${params}`);
@@ -56,7 +68,7 @@ export function useClients(): UseClientsReturn {
     }
 
     fetchClients();
-  }, [search, page]);
+  }, [search, page, businessId, sortBy, sortOrder]);
 
   return {
     clients,
@@ -66,5 +78,11 @@ export function useClients(): UseClientsReturn {
     setSearch,
     page,
     setPage,
+    businessId,
+    setBusinessId,
+    sortBy,
+    setSortBy,
+    sortOrder,
+    setSortOrder,
   };
 }

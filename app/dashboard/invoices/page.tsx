@@ -14,28 +14,27 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { useInvoices } from "@/lib/hooks/useInvoices";
+import { useBusiness } from "@/lib/hooks/useBusiness";
 import {
   Search,
   FileText,
-  MoreVertical,
-  Download,
   ChevronLeft,
   ChevronRight,
   View,
   FilePenLine,
   Printer,
+  ArrowUpDown,
 } from "lucide-react";
-import { PDFDownloadLink } from "@react-pdf/renderer";
-import { InvoicePDF } from "@/components/invoice-pdf";
-import { format, formatDate } from "date-fns";
+import { format } from "date-fns";
 
 const statusColors = {
   PENDING: "default",
@@ -54,8 +53,23 @@ export default function InvoicesPage() {
     setSearch,
     page,
     setPage,
-    refreshInvoices,
+    businessId,
+    setBusinessId,
+    sortBy,
+    setSortBy,
+    sortOrder,
+    setSortOrder,
   } = useInvoices();
+  const { businesses } = useBusiness();
+
+  const handleSort = (column: string) => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(column);
+      setSortOrder("asc");
+    }
+  };
 
   if (loading) {
     return (
@@ -74,26 +88,96 @@ export default function InvoicesPage() {
         </Button>
       </div>
 
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-        <Input
-          placeholder="Search invoices..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-10"
-        />
+      <div className="flex gap-4 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <Input
+            placeholder="Search invoices..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Select value={businessId} onValueChange={setBusinessId}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="All Businesses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Businesses</SelectItem>
+            {businesses.map((business) => (
+              <SelectItem key={business.id} value={business.id}>
+                {business.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Invoice #</TableHead>
-              <TableHead>Client</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Due Date</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort("number")}
+                  className="flex items-center gap-1"
+                >
+                  Invoice #
+                  <ArrowUpDown className="h-4 w-4" />
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort("client.name")}
+                  className="flex items-center gap-1"
+                >
+                  Client
+                  <ArrowUpDown className="h-4 w-4" />
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort("date")}
+                  className="flex items-center gap-1"
+                >
+                  Date
+                  <ArrowUpDown className="h-4 w-4" />
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort("dueDate")}
+                  className="flex items-center gap-1"
+                >
+                  Due Date
+                  <ArrowUpDown className="h-4 w-4" />
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort("total")}
+                  className="flex items-center gap-1"
+                >
+                  Amount
+                  <ArrowUpDown className="h-4 w-4" />
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort("status")}
+                  className="flex items-center gap-1"
+                >
+                  Status
+                  <ArrowUpDown className="h-4 w-4" />
+                </Button>
+              </TableHead>
+
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>

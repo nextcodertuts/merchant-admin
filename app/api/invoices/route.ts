@@ -16,6 +16,9 @@ export async function GET(request: Request) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
     const search = searchParams.get("search") || "";
+    const businessId = searchParams.get("businessId");
+    const sortBy = searchParams.get("sortBy") || "createdAt";
+    const sortOrder = searchParams.get("sortOrder") || "desc";
 
     const skip = (page - 1) * limit;
 
@@ -26,6 +29,7 @@ export async function GET(request: Request) {
         { client: { name: { contains: search, mode: "insensitive" } } },
         { client: { phone: { contains: search, mode: "insensitive" } } },
       ],
+      ...(businessId && { businessId }),
     };
 
     const [invoices, total] = await Promise.all([
@@ -37,7 +41,7 @@ export async function GET(request: Request) {
           items: { include: { product: true } },
           payments: true,
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: { [sortBy]: sortOrder },
         skip,
         take: limit,
       }),

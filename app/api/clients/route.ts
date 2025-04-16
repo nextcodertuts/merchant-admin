@@ -66,6 +66,9 @@ export async function GET(request: Request) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
     const search = searchParams.get("search") || "";
+    const businessId = searchParams.get("businessId");
+    const sortBy = searchParams.get("sortBy") || "createdAt";
+    const sortOrder = searchParams.get("sortOrder") || "desc";
 
     const skip = (page - 1) * limit;
 
@@ -76,18 +79,26 @@ export async function GET(request: Request) {
         { phone: { contains: search, mode: "insensitive" } },
         { email: { contains: search, mode: "insensitive" } },
       ],
+      ...(businessId && {
+        invoices: {
+          some: {
+            businessId,
+          },
+        },
+      }),
     };
 
     const [clients, total] = await Promise.all([
       prisma.client.findMany({
         where,
-        orderBy: { createdAt: "desc" },
+        orderBy: { [sortBy]: sortOrder },
         skip,
         take: limit,
         include: {
           invoices: {
             include: {
               payments: true,
+              business: true,
             },
           },
         },
@@ -108,9 +119,30 @@ export async function GET(request: Request) {
         0
       );
 
+      // Group invoices by business
+      const businessInvoices = client.invoices.reduce((acc, invoice) => {
+        const businessId = invoice.business.id;
+        if (!acc[businessId]) {
+          acc[businessId] = {
+            businessName: invoice.business.name,
+            total: 0,
+            paid: 0,
+            credit: 0,
+          };
+        }
+        acc[businessId].total += invoice.total;
+        acc[businessId].paid += invoice.payments.reduce(
+          (sum, payment) => sum + payment.amount,
+          0
+        );
+        acc[businessId].credit = acc[businessId].total - acc[businessId].paid;
+        return acc;
+      }, {});
+
       return {
         ...client,
         totalCredit: totalInvoiceAmount - totalPayments,
+        businessInvoices,
         invoices: undefined, // Remove invoices from response to keep it clean
       };
     });
