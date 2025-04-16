@@ -19,6 +19,12 @@ interface UseProductsReturn {
   setSearch: (search: string) => void;
   page: number;
   setPage: (page: number) => void;
+  businessId: string;
+  setBusinessId: (businessId: string) => void;
+  sortBy: string;
+  setSortBy: (sortBy: string) => void;
+  sortOrder: string;
+  setSortOrder: (sortOrder: string) => void;
   mutate: () => Promise<void>;
 }
 
@@ -27,6 +33,9 @@ export function useProducts(): UseProductsReturn {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [businessId, setBusinessId] = useState("");
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortOrder, setSortOrder] = useState("desc");
   const [pagination, setPagination] = useState<PaginationData>({
     total: 0,
     pages: 0,
@@ -40,6 +49,9 @@ export function useProducts(): UseProductsReturn {
         page: page.toString(),
         limit: "10",
         ...(search && { search }),
+        ...(businessId && { businessId }),
+        sortBy,
+        sortOrder,
       });
 
       const response = await fetch(`/api/products?${params}`);
@@ -57,7 +69,7 @@ export function useProducts(): UseProductsReturn {
 
   useEffect(() => {
     fetchProducts();
-  }, [search, page]);
+  }, [search, page, businessId, sortBy, sortOrder]);
 
   return {
     products,
@@ -67,6 +79,12 @@ export function useProducts(): UseProductsReturn {
     setSearch,
     page,
     setPage,
+    businessId,
+    setBusinessId,
+    sortBy,
+    setSortBy,
+    sortOrder,
+    setSortOrder,
     mutate: fetchProducts,
   };
 }

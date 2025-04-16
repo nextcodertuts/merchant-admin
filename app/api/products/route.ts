@@ -16,8 +16,31 @@ export async function GET(request: Request) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
     const search = searchParams.get("search") || "";
+    const businessId = searchParams.get("businessId");
+    const sortBy = searchParams.get("sortBy") || "createdAt";
+    const sortOrder = searchParams.get("sortOrder") || "desc";
 
     const skip = (page - 1) * limit;
+
+    // Get all invoices for the user to check which products are used in which business
+    const invoices = await prisma.invoice.findMany({
+      where: {
+        userId: user.id,
+        ...(businessId && { businessId }),
+      },
+      include: {
+        items: true,
+      },
+    });
+
+    // Get unique product IDs from the invoices
+    const productIds = [
+      ...new Set(
+        invoices.flatMap((invoice) =>
+          invoice.items.map((item) => item.productId)
+        )
+      ),
+    ];
 
     const where = {
       userId: user.id,
@@ -25,12 +48,13 @@ export async function GET(request: Request) {
         { name: { contains: search, mode: "insensitive" } },
         { description: { contains: search, mode: "insensitive" } },
       ],
+      ...(businessId && { id: { in: productIds } }),
     };
 
     const [products, total] = await Promise.all([
       prisma.product.findMany({
         where,
-        orderBy: { createdAt: "desc" },
+        orderBy: { [sortBy]: sortOrder },
         skip,
         take: limit,
       }),
@@ -64,6 +88,7 @@ export async function POST(request: Request) {
     const {
       name,
       description,
+      category,
       buyPrice,
       price,
       unit,
@@ -76,6 +101,7 @@ export async function POST(request: Request) {
       data: {
         name,
         description,
+        category,
         price,
         buyPrice,
         unit,
