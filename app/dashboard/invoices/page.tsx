@@ -35,6 +35,7 @@ import {
   ArrowUpDown,
 } from "lucide-react";
 import { format } from "date-fns";
+import { VoiceSearch } from "@/components/forms/VoiceSearch";
 
 const statusColors = {
   PENDING: "default",
@@ -71,6 +72,10 @@ export default function InvoicesPage() {
     }
   };
 
+  const handleVoiceResult = (transcript: string) => {
+    setSearch(transcript);
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -98,6 +103,7 @@ export default function InvoicesPage() {
             className="pl-10"
           />
         </div>
+        <VoiceSearch onResult={handleVoiceResult} />
         <Select value={businessId} onValueChange={setBusinessId}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="All Businesses" />

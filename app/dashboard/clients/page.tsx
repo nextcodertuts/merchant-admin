@@ -34,6 +34,7 @@ import {
 import { Client } from "@/types";
 import { useState } from "react";
 import { toast } from "sonner";
+import { VoiceSearch } from "@/components/forms/VoiceSearch";
 
 export default function ClientsPage() {
   const {
@@ -105,6 +106,10 @@ export default function ClientsPage() {
     }
   };
 
+  const handleVoiceResult = (transcript: string) => {
+    setSearch(transcript);
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -132,6 +137,7 @@ export default function ClientsPage() {
             className="pl-10"
           />
         </div>
+        <VoiceSearch onResult={handleVoiceResult} />
         <Select value={businessId} onValueChange={setBusinessId}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="All Businesses" />
