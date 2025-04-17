@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import Link from "next/link";
+import { VoiceAgent } from "@/components/VoiceAgent";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -22,6 +23,7 @@ export default function RootLayout({
         <div className="min-h-screen bg-background relative">
           {children}
           <Toaster />
+          <VoiceAgent />
           <div className="absolute bottom-2 right-6 print:hidden">
             <small>
               Made with ❤️ By{" "}
