@@ -14,6 +14,7 @@ import {
 import { Search } from "lucide-react";
 import { toast } from "sonner";
 import { useDebounce } from "@/lib/hooks/useDebounce";
+import { VoiceSearch } from "./VoiceSearch";
 
 interface ProductSearchProps {
   onSelect: (product: Product) => void;
@@ -59,19 +60,27 @@ export function ProductSearch({ onSelect }: ProductSearchProps) {
     setProducts([]); // Clear products list
   };
 
+  const handleVoiceResult = (transcript: string) => {
+    setSearch(transcript);
+    setOpen(true);
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setOpen(true)}
-          className="w-full justify-start text-left font-normal"
-        >
-          <Search className="h-4 w-4 mr-2" />
-          Search products...
-        </Button>
-      </DialogTrigger>
+      <div className="flex gap-2">
+        <DialogTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setOpen(true)}
+            className="w-full justify-start text-left font-normal"
+          >
+            <Search className="h-4 w-4 mr-2" />
+            Search products...
+          </Button>
+        </DialogTrigger>
+        <VoiceSearch onResult={handleVoiceResult} />
+      </div>
       <DialogContent className="p-0 max-w-[90vw] md:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="sr-only">Search Products</DialogTitle>
@@ -102,7 +111,7 @@ export function ProductSearch({ onSelect }: ProductSearchProps) {
             )}
             {!loading && !search && (
               <div className="p-4 text-sm text-center text-muted-foreground">
-                Start typing to search products...
+                Start typing or use voice search to search products...
               </div>
             )}
             {products.map((product) => (
