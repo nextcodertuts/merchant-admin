@@ -1,10 +1,12 @@
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [postgis]
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 model User {
@@ -68,7 +70,7 @@ model Client {
 }
 
 model Business {
-  id                String    @id @default(cuid())
+  id                String                    @id @default(cuid())
   name              String
   address           String?
   city              String?
@@ -82,13 +84,18 @@ model Business {
   ifscCode          String?
   accountNo         String?
   upiId             String?
-  invoicePrefix     String    @default("INV")
-  lastInvoiceNumber Int       @default(0)
+  invoicePrefix     String                    @default("INV")
+  lastInvoiceNumber Int                       @default(0)
+  location          Unsupported("geography")?
+  latitude          Float?
+  longitude         Float?
   userId            String
-  user              User      @relation(fields: [userId], references: [id])
+  user              User                      @relation(fields: [userId], references: [id])
   invoices          Invoice[]
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+
+  @@index([location], type: Gist)
 }
 
 model Product {
