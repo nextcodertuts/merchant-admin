@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
+//@ts-nocheck
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
@@ -12,14 +11,17 @@ const DEFAULT_LIMIT = 10;
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const lat = parseFloat(searchParams.get("lat") || "0");
-    const lng = parseFloat(searchParams.get("lng") || "0");
-    const radiusKm = parseFloat(
+    const lat = Number.parseFloat(searchParams.get("lat") || "0");
+    const lng = Number.parseFloat(searchParams.get("lng") || "0");
+    const radiusKm = Number.parseFloat(
       searchParams.get("radius") || String(DEFAULT_RADIUS_KM)
     );
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || String(DEFAULT_LIMIT));
+    const page = Number.parseInt(searchParams.get("page") || "1");
+    const limit = Number.parseInt(
+      searchParams.get("limit") || String(DEFAULT_LIMIT)
+    );
     const search = searchParams.get("search") || "";
+    const category = searchParams.get("category") || "";
 
     if (!lat || !lng) {
       return NextResponse.json(
@@ -32,19 +34,23 @@ export async function GET(request: Request) {
 
     // First, find businesses within the radius
     const nearbyBusinesses = await prisma.$queryRaw`
-      SELECT id, name,
+      SELECT 
+        b.id, 
+        b.name,
+        b."userId",
         ST_Distance(
-          ST_MakePoint(longitude, latitude)::geography,
+          ST_MakePoint(b.longitude, b.latitude)::geography,
           ST_MakePoint(${lng}, ${lat})::geography
         ) as distance
-      FROM "Business"
-      WHERE longitude IS NOT NULL 
-        AND latitude IS NOT NULL
+      FROM "Business" b
+      WHERE b.longitude IS NOT NULL 
+        AND b.latitude IS NOT NULL
         AND ST_DWithin(
-          ST_MakePoint(longitude, latitude)::geography,
+          ST_MakePoint(b.longitude, b.latitude)::geography,
           ST_MakePoint(${lng}, ${lat})::geography,
           ${radiusKm * METERS_PER_KM}
         )
+      ORDER BY distance
     `;
 
     if (!nearbyBusinesses.length) {
@@ -59,39 +65,65 @@ export async function GET(request: Request) {
       });
     }
 
-    // Get business IDs
-    const businessIds = nearbyBusinesses.map((b: any) => b.id);
+    // Get user IDs who own these businesses
+    const userIds = [...new Set(nearbyBusinesses.map((b: any) => b.userId))];
 
-    // Get products from these businesses
+    // Create a map of businesses for quick lookup
+    const businessMap = nearbyBusinesses.reduce((map: any, business: any) => {
+      map[business.userId] = business;
+      return map;
+    }, {});
+
+    // Get products from these users with filtering
+    const whereClause: any = {
+      userId: { in: userIds },
+    };
+
+    if (search) {
+      whereClause.name = {
+        contains: search,
+        mode: "insensitive",
+      };
+    }
+
+    if (category) {
+      whereClause.category = {
+        contains: category,
+        mode: "insensitive",
+      };
+    }
+
     const products = await prisma.product.findMany({
-      where: {
-        name: {
-          contains: search,
-          mode: "insensitive",
-        },
-      },
+      where: whereClause,
       take: limit,
       skip: skip,
+      orderBy: {
+        createdAt: "desc",
+      },
     });
 
     // Get total count
     const total = await prisma.product.count({
-      where: {
-        name: {
-          contains: search,
-          mode: "insensitive",
-        },
-      },
+      where: whereClause,
     });
 
-    // Add distance to each product
-    const productsWithDistance = products.map((product) => ({
-      ...product,
-      distance: 0, // You'll need to calculate this based on the business location
-    }));
+    // Add merchant name and distance to each product
+    const productsWithMerchantAndDistance = products.map((product) => {
+      const business = businessMap[product.userId];
+      return {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        merchantName: business?.name || "Unknown Merchant",
+        distance: Number.parseFloat(business?.distance) / METERS_PER_KM, // Convert to km
+        images: product.images,
+        category: product.category,
+        description: product.description,
+      };
+    });
 
     return NextResponse.json({
-      products: productsWithDistance,
+      products: productsWithMerchantAndDistance,
       pagination: {
         total,
         pages: Math.ceil(total / limit),
