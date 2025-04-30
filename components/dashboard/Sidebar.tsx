@@ -23,6 +23,7 @@ import {
 import type { User as UserType } from "@/types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
 
 interface SidebarProps {
   user: UserType;
@@ -76,10 +77,22 @@ export function Sidebar({ user }: SidebarProps) {
         <h1
           className={cn(
             "font-bold transition-all duration-300",
-            expanded ? "text-xl" : "text-xs"
+            expanded ? "text-lg" : "text-xs"
           )}
         >
-          {expanded ? "nextInvoice" : "nI"}
+          {expanded ? (
+            <div className="flex items-center">
+              <Image
+                src="/adaptive-icon.png"
+                height={40}
+                width={40}
+                alt="logo"
+              />
+              <p>Bill Buckz</p>
+            </div>
+          ) : (
+            <Image src="/adaptive-icon.png" height={40} width={40} alt="logo" />
+          )}
         </h1>
         <Button
           variant="ghost"

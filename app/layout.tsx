@@ -27,7 +27,13 @@ export default function RootLayout({
           <div className="absolute bottom-2 right-6 print:hidden">
             <small>
               Made with ❤️ By{" "}
-              <Link href="https://www.nextcoder.co.in">nextCoder</Link>
+              <Link
+                className="underline uppercase text-blue-600"
+                href="https://www.codvix.in"
+              >
+                codvix
+              </Link>{" "}
+              Tech Private Limited
             </small>
           </div>
         </div>
